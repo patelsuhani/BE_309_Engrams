@@ -21,3 +21,19 @@ for neuron = 1:num_neurons
     % Store the time points of the peaks (events) in the cell array
     events{neuron} = time_vector(locs);
 end
+
+% Plot the raster plot
+figure;
+hold on;
+for neuron = 1:num_neurons
+    % Plot a dot for each event (peak) detected for the neuron
+    plot(events{neuron}, neuron * ones(size(events{neuron})), 'k.', 'MarkerSize', 10);
+end
+hold off;
+
+% Label the axes
+xlabel('Time (seconds)');
+ylabel('Neuron Number');
+title('Raster Plot of Neuron Activity');
+xlim([0 max(time_vector)]);
+ylim([1 num_neurons]);
