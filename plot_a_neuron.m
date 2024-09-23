@@ -4,8 +4,7 @@ load('session1.mat');  % This will load the 'neuron_network_imaging' variable
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);
 
-% Use the original time vector (0:num_timepoints-1) / 100 for the x-axis
-%time_vector = (0:num_timepoints-1) / 100;  % 100 frames per second
+% Create a custom time vector for the full cycle length (10 seconds)
 cycle_length = 100;
 length = 1000;
 T = (1/cycle_length: 1/cycle_length: length/cycle_length);

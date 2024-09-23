@@ -2,19 +2,31 @@
 load('session1.mat');  % This will load the 'neuron_network_imaging' variable
 
 % Define parameters
-[num_neurons, num_timepoints] = size(neuron_network_imaging);
-time_vector = (0:num_timepoints-1) / 100;  % 100 frames per second
+[num_timepoints, num_neurons] = size(neuron_network_imaging);
 
-% Initialize an empty matrix to store binarized event data for each neuron
-binarized_events = zeros(num_neurons, num_timepoints);
+% Create a custom time vector for the full cycle length (10 seconds)
+cycle_length = 100;
+length = 1000;
+T = (1/cycle_length: 1/cycle_length: length/cycle_length);
 
-% Binarize the data for each neuron using the imbinarize function
+% Initialize an empty matrix to store event (spike) times for each neuron
+events = cell(num_neurons, 1);
+
+% Set a threshold for peak detection - will adjust this value based on our dataset
+threshold = 250;  % Example threshold
+
+% Detect peaks for each neuron using MATLAB's findpeaks function
 for neuron = 1:num_neurons
-    % Binarize the fluorescence signal
-    binarized_events(neuron, :) = imbinarize(neuron_network_imaging(neuron, :));
+    signal = neuron_network_imaging(:, neuron);
+
+    % Use the 'findpeaks' function to detect peaks above the threshold
+    [pks, locs] = findpeaks(signal, 'MinPeakHeight', threshold);
+
+    % Store the time points of the peaks (events) in the cell array
+    events{neuron} = T(locs);
 end
 
-% Create a raster plot
+% Plot the raster plot
 figure;
 hold on;
 for neuron = 1:num_neurons
@@ -27,9 +39,9 @@ hold off;
 xlabel('Time (seconds)');
 ylabel('Neuron Number');
 title('Raster Plot of Neuron Activity');
-xlim([0 max(time_vector)]);
+xlim([0 max(T)]);
 ylim([1 num_neurons]);
-
+ylim([1 num_neurons]);
 % Display the plot
-set(gca, 'YDir', 'reverse');  % Optional: reverse the Y-axis so neuron 1 is at the top
+%set(gca, 'YDir', 'reverse');  % Optional: reverse the Y-axis so neuron 1 is at the top
 grid on;
