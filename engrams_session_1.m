@@ -37,3 +37,7 @@ ylabel('Neuron Number');
 title('Raster Plot of Neuron Activity');
 xlim([0 max(time_vector)]);
 ylim([1 num_neurons]);
+
+% Display the plot
+set(gca, 'YDir', 'reverse');  % Optional: reverse the Y-axis so neuron 1 is at the top
+grid on;
