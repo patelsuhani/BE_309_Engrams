@@ -36,6 +36,20 @@ end
 % Create filtered firing matrix
 filtered_firing_matrix = firing_matrix(:, filtered_neurons);
 
+% Initialize a matrix to store all time points for all neurons (1 for firing, 0 for no firing)
+complete_timepoint_matrix = zeros(num_neurons, num_timepoints);
+
+% Populate the matrix with values (1 for firing, 0 for no firing)
+for neuron_idx = 1:length(filtered_neurons)
+    neuron = filtered_neurons(neuron_idx);
+    for t = 1:num_timepoints
+        complete_timepoint_matrix(neuron, t) = filtered_firing_matrix(t, neuron_idx);  % 1 if fired, 0 otherwise
+    end
+end
+
+% Now, complete_timepoint_matrix holds all neurons and time points
+% with 1s for firings and 0s for no firings
+
 % Collect firing events in a list to sort by neuron number
 firing_events = [];
 for neuron_idx = 1:length(filtered_neurons)
