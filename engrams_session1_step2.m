@@ -3,7 +3,7 @@ load('session1_a_06.mat');  % This will load the 'neuron_network_imaging' variab
 
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);
-time_points = linspace(0, 1, num_timepoints);  % Adjust time_points to match num_timepoints
+time_points = linspace(1, 1000, num_timepoints);  % Adjust time_points to match num_timepoints
 
 % Set threshold for peak detection
 threshold = 250;
@@ -28,7 +28,7 @@ end
 filtered_neurons = [];
 for neuron = 1:num_neurons
     num_firing_events = sum(firing_matrix(:, neuron));  % Count firing events for each neuron
-    if num_firing_events == 10 
+    if num_firing_events >= 10 && num_firing_events <= 25
         filtered_neurons = [filtered_neurons, neuron];  % Keep neurons within the firing range
     end
 end
