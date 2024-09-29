@@ -30,3 +30,17 @@ for neuron = 1:num_neurons
         filtered_neurons = [filtered_neurons, neuron];  % Keep neurons within the firing range
     end
 end
+
+% Create filtered firing matrix
+filtered_firing_matrix = firing_matrix(:, filtered_neurons);
+
+% Collect firing events in a list to sort by neuron number
+firing_events = [];
+for neuron_idx = 1:length(filtered_neurons)
+    neuron = filtered_neurons(neuron_idx);
+    for t = 1:num_timepoints
+        if filtered_firing_matrix(t, neuron_idx) == 1
+            firing_events = [firing_events; neuron, time_points(t)];  % Store neuron and corresponding time point
+        end
+    end
+end
