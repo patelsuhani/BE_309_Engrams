@@ -4,8 +4,10 @@ load('session1_training_chars_06.mat');  % This will load the 'neuron_network_im
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);
 time_points = linspace(1, 1000, num_timepoints);  % Adjust time_points to be in milliseconds (0 to 1000 ms)
+
 % Set threshold for peak detection
 threshold = 250;
+
 % Initialize binary matrix for firing events
 firing_matrix = zeros(num_timepoints, num_neurons);
 
@@ -42,5 +44,16 @@ for neuron_idx = 1:length(filtered_neurons)
         if filtered_firing_matrix(t, neuron_idx) == 1
             firing_events = [firing_events; neuron, time_points(t)];  % Store neuron and corresponding time point
         end
+    end
+end
+
+% Sort firing events by neuron number (first column)
+firing_events = sortrows(firing_events, 1);
+
+% Print the sorted firing events with time <= 100 ms
+fprintf('Firing events (N(timepoint (ms), neuron)) for time <= 100 ms:\n');
+for i = 1:size(firing_events, 1)
+    if firing_events(i, 2) <= 100  % Only print events where time is <= 100 ms
+        fprintf('N(%.2f, %d) = 1\n', firing_events(i, 2), firing_events(i, 1));
     end
 end
