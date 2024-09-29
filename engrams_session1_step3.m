@@ -8,3 +8,16 @@ time_points = linspace(1, 1000, num_timepoints);  % Adjust time_points to be in 
 threshold = 250;
 % Initialize binary matrix for firing events
 firing_matrix = zeros(num_timepoints, num_neurons);
+
+% Detect firing sequences for each neuron
+for neuron = 1:num_neurons
+    signal = neuron_network_imaging(:, neuron);
+    
+    % Use findpeaks to detect peaks above the threshold
+    [pks, locs] = findpeaks(signal, 'MinPeakHeight', threshold);
+    
+    % Mark firing events in the binary matrix
+    for loc = locs
+        firing_matrix(loc, neuron) = 1;  % Set N(timepoint, neuron) = 1 for firing events
+    end
+end
