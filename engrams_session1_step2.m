@@ -3,7 +3,7 @@ load('session1_a_06.mat');  % This will load the 'neuron_network_imaging' variab
 
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);
-time_points = linspace(1, 1000, num_timepoints);  % Adjust time_points to match num_timepoints
+time_points = linspace(1, 1000, num_timepoints);  % Adjust time_points to be in milliseconds (0 to 1000 ms)
 
 % Set threshold for peak detection
 threshold = 250;
@@ -36,20 +36,6 @@ end
 % Create filtered firing matrix
 filtered_firing_matrix = firing_matrix(:, filtered_neurons);
 
-% Initialize a matrix to store all time points for all neurons (1 for firing, 0 for no firing)
-complete_timepoint_matrix = zeros(num_neurons, num_timepoints);
-
-% Populate the matrix with values (1 for firing, 0 for no firing)
-for neuron_idx = 1:length(filtered_neurons)
-    neuron = filtered_neurons(neuron_idx);
-    for t = 1:num_timepoints
-        complete_timepoint_matrix(neuron, t) = filtered_firing_matrix(t, neuron_idx);  % 1 if fired, 0 otherwise
-    end
-end
-
-% Now, complete_timepoint_matrix holds all neurons and time points
-% with 1s for firings and 0s for no firings
-
 % Collect firing events in a list to sort by neuron number
 firing_events = [];
 for neuron_idx = 1:length(filtered_neurons)
@@ -64,8 +50,10 @@ end
 % Sort firing events by neuron number (first column)
 firing_events = sortrows(firing_events, 1);
 
-% Print the sorted firing events
-fprintf('Firing events (N(timepoint, neuron)):\n');
+% Print the sorted firing events with time <= 100 ms
+fprintf('Firing events (N(timepoint (ms), neuron)) for time <= 100 ms:\n');
 for i = 1:size(firing_events, 1)
-    fprintf('N(%.2f, %d) = 1\n', firing_events(i, 2), firing_events(i, 1));
+    if firing_events(i, 2) <= 100  % Only print events where time is <= 100 ms
+        fprintf('N(%.2f, %d) = 1\n', firing_events(i, 2), firing_events(i, 1));
+    end
 end
