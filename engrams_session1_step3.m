@@ -21,3 +21,12 @@ for neuron = 1:num_neurons
         firing_matrix(loc, neuron) = 1;  % Set N(timepoint, neuron) = 1 for firing events
     end
 end
+
+% Filter neurons firing between 10 and 25 times across all time points
+filtered_neurons = [];
+for neuron = 1:num_neurons
+    num_firing_events = sum(firing_matrix(:, neuron));  % Count firing events for each neuron
+    if num_firing_events >= 10 && num_firing_events <= 25
+        filtered_neurons = [filtered_neurons, neuron];  % Keep neurons within the firing range
+    end
+end
