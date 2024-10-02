@@ -38,11 +38,11 @@ filtered_firing_matrix = firing_matrix(:, filtered_neurons);
 
 % Collect firing events in a list to sort by neuron number
 firing_events = [];
-for neuron_idx = 1:length(filtered_neurons)
-    neuron = filtered_neurons(neuron_idx);
+for neuron_idx = 1:size(filtered_firing_matrix, 2)  % Use size of filtered_firing_matrix columns
+    neuron = filtered_neurons(neuron_idx);  % Get the original neuron index
     for t = 1:num_timepoints
         if filtered_firing_matrix(t, neuron_idx) == 1
-            firing_events = [firing_events; neuron, time_points(t)];  % Store neuron and corresponding time point
+            firing_events = [firing_events; neuron, time_points(t)];  % Store original neuron and corresponding time point
         end
     end
 end
