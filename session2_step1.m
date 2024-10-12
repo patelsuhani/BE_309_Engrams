@@ -1,69 +1,57 @@
-% Load the dataset (replace 'session2_a_misfire_xx.mat' with the actual file)
+% Load the dataset
 load('session2_a_misfire_06.mat');  % This will load 'neuron_network_imaging' for the letter "a"
 
 % Define parameters
-[num_timepoints, num_neurons] = size(neuron_network_imaging);
-time_points = linspace(1, 1000, num_timepoints);  % Time points in milliseconds (0 to 1000 ms)
+[num_timepoints, num_neurons] = size(neuron_network_imaging);  % 1000 rows (time points), 200 columns (neurons)
+num_recalls = 10;  % 10 recalls/engrams
+recall_duration = num_timepoints / num_recalls;  % 100 ms (100 rows) per recall
+threshold = 250;  % Threshold for detecting peaks (neuron firing)
 
-% Number of recall events (10 times for letter "a")
-num_recalls = 10;
-recall_duration = num_timepoints / num_recalls;  % Time points for each recall event
+% Initialize a 3D matrix to store binary firing events for each recall
+binary_matrices = zeros(recall_duration, num_neurons, num_recalls);  % 100x200x10
 
-% Set threshold for peak detection (adjust based on data)
-threshold = 250;
-
-% Initialize binary matrix for firing events (time points by neurons)
-firing_matrix = zeros(num_timepoints, num_neurons);
-
-% Detect firing sequences for each neuron
-for neuron = 1:num_neurons
-    signal = neuron_network_imaging(:, neuron);
+% Loop through each recall and generate the binary matrix
+for recall = 1:num_recalls
+    % Define the start and end rows for the current recall
+    start_row = (recall - 1) * recall_duration + 1;
+    end_row = recall * recall_duration;
     
-    % Use findpeaks to detect peaks above the threshold
-    [pks, locs] = findpeaks(signal, 'MinPeakHeight', threshold);
+    % Extract the current recall segment from the main data
+    recall_segment = neuron_network_imaging(start_row:end_row, :);
     
-    % Mark firing events in the binary matrix
-    for loc = locs
-        firing_matrix(loc, neuron) = 1;  % Set N(timepoint, neuron) = 1 for firing events
+    % For each neuron, detect peaks using findpeaks
+    for neuron = 1:num_neurons
+        signal = recall_segment(:, neuron);  % Get the fluorescence signal for the current neuron
+        
+        % Detect peaks using findpeaks with a threshold for peak height
+        [pks, locs] = findpeaks(signal, 'MinPeakHeight', threshold, 'MinPeakProminence', 50, 'MinPeakDistance', 10);
+        
+        % Mark the locations of the peaks (where the neuron fired) with 1
+        binary_matrices(locs, neuron, recall) = 1;
     end
 end
 
-% Analyze consistency of neuron firing across 10 recalls
-recall_firing_counts = zeros(num_recalls, num_neurons);
+% Now, calculate the average of the binary matrices across the 10 recalls
+average_binary_matrix = mean(binary_matrices, 3);  % Take the mean across the 3rd dimension (10 recalls)
 
-% Loop through each recall event and count firing per neuron
-for recall = 1:num_recalls
-    start_time = (recall - 1) * recall_duration + 1;
-    end_time = recall * recall_duration;
-    
-    % Sum the number of firings for each neuron within this recall event
-    recall_firing_counts(recall, :) = sum(firing_matrix(start_time:end_time, :));
-end
+% Identify the neurons that are part of the engram based on the average matrix
+engram_neurons = find(max(average_binary_matrix, [], 1) >= 0.5);  % Neurons with average >= 0.8 across any time point
 
-% Analyze consistency: determine neurons firing frequently across recalls
-consistent_firing_neurons = sum(recall_firing_counts > 0) >= 8;  % Neurons firing in at least 8 out of 10 recalls
-
-% Filter for engram neurons (likely those with consistent firing)
-engram_neurons = find(consistent_firing_neurons);  % Index of neurons that are part of the engram
-
-% Create filtered firing matrix for engram neurons
-engram_firing_matrix = firing_matrix(:, engram_neurons);
-
-% Output the engram neurons and their firing times for time <= 100 ms
-fprintf('Engram neurons firing within the first 100 ms:\n');
+% Display the engram neurons and their firing times based on the average matrix
+fprintf('Engram neurons (based on consistency across recalls):\n');
 for neuron_idx = 1:length(engram_neurons)
     neuron = engram_neurons(neuron_idx);
     
-    % Find firing times for this neuron
-    firing_times = find(engram_firing_matrix(:, neuron_idx));
+    % Find time points where this neuron fires consistently (value >= 0.5 in averaged matrix)
+    firing_times = find(average_binary_matrix(:, neuron) >= 0.5);
     
-    % Only consider times <= 100 ms
-    valid_times = time_points(firing_times(firing_times <= 100));
-    
-    % Print only if there are valid times within 100 ms
-    if ~isempty(valid_times)
+    % Ensure that firing times exist; otherwise, handle the empty case
+    if isempty(firing_times)
+        fprintf('Neuron %d fires at times: No consistent firing times detected.\n', neuron);
+    else
+        % Output the firing times
         fprintf('Neuron %d fires at times: ', neuron);
-        fprintf('%.2f ms ', valid_times);
+        fprintf('%d ms ', firing_times);
         fprintf('\n');
     end
 end
