@@ -1,23 +1,30 @@
 % Load the dataset (for letter "b" variable length encoding)
 load('session2_b_variable_length_06.mat');  % Replace XX with your group number
+
 % Define general parameters
 threshold = 250;  % Threshold for detecting peaks (neuron firing)
 min_neurons = 10;  % Minimum number of neurons for engram
 max_neurons = 25;  % Maximum number of neurons for engram
 min_factor = 50;  % Minimum recall duration (50 time points)
 max_factor = 250; % Maximum recall duration (250 time points)
+
 % Get the number of recalls (different recall lengths are stored in the cell array)
 num_recalls = size(neuron_network_imaging, 1);
+
 % Initialize variables to store valid recall durations and similarity scores
 valid_engram_candidates = {};  % To store valid engram results
 valid_recall_durations = [];  % To store valid recall durations
+
 % Iterate through each recall (k) and process
 for k = 1:num_recalls
     [num_timepoints, num_neurons] = size(neuron_network_imaging{k, 1});  % Get size from recall k data
+
     % Step 1: Find all divisors (factors) of the total number of timepoints
     possible_recall_durations = divisors(num_timepoints);  % Find all divisors of num_timepoints
+    
     % Step 2: Filter factors to only those between 50 and 250
     valid_factors = possible_recall_durations(possible_recall_durations >= min_factor & possible_recall_durations <= max_factor);
+    
     % Step 3: Loop through each valid recall duration (filtered divisors)
     for recall_duration = valid_factors
         num_recalls_within_k = num_timepoints / recall_duration;  % Calculate number of recalls for this duration
@@ -67,6 +74,7 @@ for k = 1:num_recalls
         end
     end
 end
+
 % Step 6: If there is more than one valid engram candidate, compute similarity score
 if length(valid_engram_candidates) > 1
     % Initialize variables to store the best similarity score
@@ -98,6 +106,7 @@ if length(valid_engram_candidates) > 1
         end
     end
 else
+
     % If only one valid candidate exists, choose that one
     if ~isempty(valid_engram_candidates)
         best_engram = valid_engram_candidates{1};
@@ -105,6 +114,7 @@ else
         best_similarity_score = NaN;  % No need for similarity score when only one candidate
     end
 end
+
 % Step 7: Output the best recall division and similarity score
 if ~isempty(best_engram)
     fprintf('Best recall duration: %d rows per recall\n', best_recall_duration);
