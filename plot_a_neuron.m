@@ -1,5 +1,5 @@
 % Load the data from session1.mat
-load('session1.mat');  % This will load the 'neuron_network_imaging' variable
+load('session2_a_misfire_06.mat');  % This will load the 'neuron_network_imaging' variable
 
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);
@@ -10,7 +10,7 @@ length = 1000;
 T = (1/cycle_length: 1/cycle_length: length/cycle_length);
 
 % Specify the neuron you want to plot (for example, neuron 1)
-neuron_index = 70;  % Change this to plot a different neuron
+neuron_index = 33;  % Change this to plot a different neuron
 
 % Extract the fluorescence data for the specified neuron
 neuron_signal = neuron_network_imaging(:, neuron_index);

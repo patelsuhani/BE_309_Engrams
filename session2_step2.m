@@ -1,68 +1,72 @@
 % Load the dataset
-data = load('prelab_session3_training_chars_misfires.mat');  % Replace with the actual file name
-neuron_data = data.neuron_network_imaging;  % Assuming the data is stored in this variable
+load('session2_training_chars_misfire_06.mat');  % Loads 'neuron_network_imaging' for multiple characters
 
-% Load the character mapping from char_train.txt
+% Load the characters from the text file
 fileID = fopen('char_train.txt', 'r');
-char_train = fscanf(fileID, '%c');  % Read all characters as a single string
+char_sequence = fgetl(fileID);  % Read the single line from the file
 fclose(fileID);
 
-% Convert the string into a cell array of individual characters
-char_train = cellstr(char_train(:));  % Convert the string into a cell array of characters
+% Define parameters
+[num_timepoints, num_neurons, num_characters] = size(neuron_network_imaging);  % Adjusted for multiple characters
+num_recalls = 10;  % Number of recalls per character
+recall_duration = floor(num_timepoints / (num_recalls * num_characters));  % Ensure it's an integer
+threshold = 250;  % Threshold for detecting peaks (neuron firing)
 
-% Get the dimensions of the data
-[time_steps, num_neurons, num_characters] = size(neuron_data);
-fprintf('Data Dimensions - Time steps: %d, Neurons: %d, Characters: %d\n', time_steps, num_neurons, num_characters);
+% Loop through each character in the char_sequence
+for char_idx = 1:length(char_sequence)
+    current_char = char_sequence(char_idx);  % Get the current character
+    fprintf('\nProcessing character: %s\n', current_char);
+    
+    % Initialize a 3D matrix to store binary firing events for each recall of the current character
+    binary_matrices = zeros(recall_duration, num_neurons, num_recalls);  % Adjusted for each character
+    
+    % Loop through each recall for the current character
+    for recall = 1:num_recalls
+        % Define the start and end rows for the current recall
+        start_row = (char_idx - 1) * num_recalls * recall_duration + (recall - 1) * recall_duration + 1;
+        end_row = start_row + recall_duration - 1;
+        
+        % For each neuron, detect peaks using findpeaks
+        for neuron = 1:num_neurons
+            signal = recall_segment(:, neuron);  % Get the fluorescence signal for the current neuron
+            
+            disp(recall_segment(:, neuron));  % Display signal for a neuron
 
-% Ensure the number of characters in char_train matches num_characters
-if numel(char_train) ~= num_characters
-    error('The number of characters in char_train.txt does not match the number of characters in the data.');
-end
+            % Only proceed if the signal has at least 3 points
+            if length(signal) >= 3
+                % Detect peaks using findpeaks with a threshold for peak height
+                [pks, locs] = findpeaks(signal, 'MinPeakHeight', threshold, 'MinPeakProminence', 50, 'MinPeakDistance', 10);
+                
+                % Mark the locations of the peaks (where the neuron fired) with 1
+                binary_matrices(locs, neuron, recall) = 1;
+            end
+        end
+    end
+    
+    %disp(binary_matrices);  % Print the binary firing matrix after peak detection
 
-% Initialize a structure to store engrams for each character
-engrams = struct();
-
-% Smoothing parameters
-window_size = 5;  % Adjust the window size as necessary
-for k = 1:num_characters
-    char = char_train{k};  % Get the character corresponding to index k
-    character_data = neuron_data(:, :, k);  % Extract data for this character
+    % Now, calculate the average of the binary matrices across the 10 recalls
+    average_binary_matrix = mean(binary_matrices, 3);  % Take the mean across the 3rd dimension (10 recalls)
     
-    % Apply a moving average filter to smooth the data for each neuron
-    smoothed_data = movmean(character_data, window_size, 1);
+    % Identify the neurons that are part of the engram based on the average matrix
+    engram_neurons = find(max(average_binary_matrix, [], 1) >= 0.5);  % Neurons with average >= 0.5
     
-    % Calculate the mean activation over time for each neuron
-    avg_activation = mean(smoothed_data, 1);
-    
-    % Dynamic threshold based on the mean and standard deviation
-    threshold = mean(avg_activation) + 2 * std(avg_activation);
-    
-    % Find neurons whose average activation exceeds the dynamic threshold
-    significant_neurons = find(avg_activation > threshold);
-    
-    % Use a shorter, index-based field name (char_ followed by character index)
-    field_name = ['char_' num2str(k)];
-    
-    % Store the engram for the current character in the structure
-    engrams.(field_name) = struct('char', char, 'neurons', significant_neurons);
-end
-
-% Display the engrams for each character with the count of neurons
-fields = fieldnames(engrams);
-for i = 1:numel(fields)
-    field_name = fields{i};
-    engram_neurons = engrams.(field_name).neurons;
-    character = engrams.(field_name).char;
-    
-    % Improved output format with neuron count
-    num_neurons_for_char = numel(engram_neurons);
-    
-    if isempty(engram_neurons)
-        fprintf('Engram for character "%s" (field %s): No significant neurons\n', character, field_name);
-    else
-        % Print the number of neurons and the neuron list
-        neuron_list = sprintf('%d, ', engram_neurons);
-        neuron_list = neuron_list(1:end-2);  % Remove the trailing comma and space
-        fprintf('Engram for character "%s" (field %s): %d neurons - [%s]\n', character, field_name, num_neurons_for_char, neuron_list);
+    % Display the engram neurons and their firing times based on the average matrix
+    fprintf('Engram neurons for character %s (based on consistency across recalls):\n', current_char);
+    for neuron_idx = 1:length(engram_neurons)
+        neuron = engram_neurons(neuron_idx);
+        
+        % Find time points where this neuron fires consistently (value >= 0.5 in averaged matrix)
+        firing_times = find(average_binary_matrix(:, neuron) >= 0.5);
+        
+        % Ensure that firing times exist; otherwise, handle the empty case
+        if isempty(firing_times)
+            fprintf('Neuron %d fires at times: No consistent firing times detected.\n', neuron);
+        else
+            % Output the firing times
+            fprintf('Neuron %d fires at times: ', neuron);
+            fprintf('%d ms ', firing_times);
+            fprintf('\n');
+        end
     end
 end

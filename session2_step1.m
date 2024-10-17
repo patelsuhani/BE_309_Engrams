@@ -1,5 +1,5 @@
 % Load the dataset
-load('session2_a_misfire_06.mat');  % This will load 'neuron_network_imaging' for the letter "a"
+load('session2_training_chars_misfire_06.mat');  % This will load 'neuron_network_imaging' for the letter "a"
 
 % Define parameters
 [num_timepoints, num_neurons] = size(neuron_network_imaging);  % 1000 rows (time points), 200 columns (neurons)
